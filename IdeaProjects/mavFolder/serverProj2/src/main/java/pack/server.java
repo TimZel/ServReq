@@ -12,7 +12,8 @@ public class server {
         int count = 0;//счетчик
         ServerSocket serverSocket  = new ServerSocket(12000);//серверный сокет с портом коннекта
         Socket clientSocket;//сокет подключения с клиентом
-        Pattern pattern1 = Pattern.compile ("^GET.+");//создаю объект pattern1 типа Pattern на основе реджекс для поиска (GET в начале строки и рандомный текст после)
+        Pattern pattern1 = Pattern.compile ("^(GET){1,1}\\b\\s.+(HTTP\\/){1,1}.+$");//создаю объект pattern1 типа Pattern на основе реджекс
+        // для поиска (GET в начале строки и HTTP/)
         while (count < 6) {//пока верно
             clientSocket = serverSocket.accept();//создаю сокет для подключения и ожидаю подключения
             System.out.println("Client " + (++count) + " entered ");//отображаю вход клиента и его номер
