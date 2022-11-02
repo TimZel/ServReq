@@ -3,6 +3,8 @@ package pack;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 
 public class server {
@@ -10,15 +12,15 @@ public class server {
         int count = 0;//счетчик
         ServerSocket serverSocket  = new ServerSocket(12000);//серверный сокет с портом коннекта
         Socket clientSocket;//сокет подключения с клиентом
-        String sub = "GET";//подстрока для аутентификация метода http
+        Pattern pattern1 = Pattern.compile ("^GET.+");//создаю объект pattern1 типа Pattern на основе реджекс для поиска (GET в начале строки и рандомный текст после)
         while (count < 6) {//пока верно
             clientSocket = serverSocket.accept();//создаю сокет для подключения и ожидаю подключения
             System.out.println("Client " + (++count) + " entered ");//отображаю вход клиента и его номер
             BufferedReader isr = new BufferedReader(new InputStreamReader(clientSocket.getInputStream())); //открываю входящий поток
             BufferedWriter osw = new BufferedWriter(new OutputStreamWriter(clientSocket.getOutputStream()));//открываю выводящий поток
             String request = isr.readLine();//считываю входящую инфу
-
-            if(request.contains(sub)) { //определяю метод http
+            Matcher matcher1 = pattern1.matcher(request);//создаю объект matcher1 типа Matcher на основе поступившей от клиента информации
+            if(matcher1.find()) { //определяю метод http
                 //если не GET, то ошибка е500
                 osw.write("HTTP/1.0 200 OK\n" +
                         "Content-type: text/html\n" +
@@ -26,7 +28,7 @@ public class server {
                         request.length() +"\n" +
                         "<h1>Welcome, client " + count + "</h1>");
             } else {
-                osw.write("e500");
+                osw.write("500\nInternal Server Error");
             }
             osw.flush();//сбрасываю поток
 
