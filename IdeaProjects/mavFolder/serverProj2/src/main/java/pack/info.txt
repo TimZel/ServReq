@@ -1,0 +1,1 @@
+	The info from the server's file "info.txt": list of Hogwarts's Houses: -Hufflepuff; -Ravenclaw; -Gryffindor; -Slytherin;
