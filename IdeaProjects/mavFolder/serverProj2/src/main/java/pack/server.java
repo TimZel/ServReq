@@ -10,14 +10,13 @@ import java.util.regex.Pattern;
 
 
 public class server {
+
     public static void main(String[] args) throws IOException {
         int count = 0;//счетчик
         ServerSocket serverSocket  = new ServerSocket(12000);//серверный сокет с портом коннекта
         Socket clientSocket;//сокет подключения с клиентом
         //для поиска(GET в начале строки и HTTP, а также названия файла)
-        Pattern pattern1 = Pattern.compile ("^(GET){1,1}\\b\\s.+\\b(info\\.txt){1,1}\\b\\s(HTTP\\/){1,1}.+$");//создаю объект pattern1 типа Pattern на основе реджекс
-        Pattern pattern2 = Pattern.compile ("^(GET){1,1}\\b\\s.+\\b(file1\\.txt){1,1}\\b\\s(HTTP\\/){1,1}.+$");//создаю объект pattern2 типа Pattern на основе реджекс
-        Pattern pattern3 = Pattern.compile ("^(GET){1,1}\\b\\s.+\\b(file2\\.txt){1,1}\\b\\s(HTTP\\/){1,1}.+$");//создаю объект pattern3 типа Pattern на основе реджекс
+        Pattern pattern1 = Pattern.compile ("^(GET){1,1}\\b\\s.+$");//создаю объект pattern1 типа Pattern на основе реджекс
 
         File dir = new File("C:\\Users\\Администратор\\IdeaProjects\\mavFolder\\serverProj2\\src\\main\\java\\pack");//путь к директории с файлами
 
@@ -31,12 +30,11 @@ public class server {
             String request = isr.readLine();//считываю входящую инфу
 
             Matcher matcher1 = pattern1.matcher(request);//создаю объект matcher1 типа Matcher на основе поступившей от клиента информации
-            Matcher matcher2 = pattern2.matcher(request);//создаю объект matcher2 типа Matcher на основе поступившей от клиента информации
-            Matcher matcher3 = pattern3.matcher(request);//создаю объект matcher3 типа Matcher на основе поступившей от клиента информации
 
-            if(matcher1.find()||matcher2.find()||matcher3.find()) { //определяю метод http
+            if(matcher1.find()) { //определяю метод http
                 //если не один из трех GET, то ошибка е500
                 List<File> fileList = new ArrayList<>();//список для файлов из директории
+                String filePath = null;//инициализирую filePath
                 for (File file : dir.listFiles()){//перебираю массив объектов(путей) к файлам в директории dir
                     fileList.add(file);//переписываю пути доступа к файлам
                 }
@@ -46,30 +44,39 @@ public class server {
                 }
                 for (int i = 0; i < fileArray.length; i++) {//ищу путь к файлу из запроса
                     if (request.contains(fileArray[i])) {//если путь к файлу из запроса  есть в списке
-                        String filePath = fileArray[i];//копирую сюда путь к файлу
-                        osw.write("HTTP/1.0 200 OK\n" +
-                                "Content-type: text/html\n" +
-                                "Content-length: " +
-                                request.length() +"\n" +
-                                "<h1>Welcome, client " + count  + "</h1>\n\n\n");//сообщаю данные о запросе клиенту
-                        BufferedReader br = new BufferedReader(new FileReader(filePath));//открываю поток для чтения файла по адресу filePath
-                        String s;
-                        while((s = br.readLine()) != null) {//считываю файл по адресу filePath
-                            osw.write(s);//передаю клиенту
-                        }
-                        br.close();//закрываю поток
+                        filePath = fileArray[i];//копирую сюда путь к файлу
                     }
                 }
+                if (filePath != null) {
+                    osw.write("HTTP/1.0 200 OK\n" +
+                            "Content-type: text/html\n" +
+                            "Content-length: " +
+                            request.length() +"\n" +
+                            "<h1>Welcome, client " + count  + "</h1>\n\n\n");//сообщаю данные о запросе клиенту
+                    BufferedReader br = new BufferedReader(new FileReader(filePath));//открываю поток для чтения файла по адресу filePath
+                    String s;
+                    while((s = br.readLine()) != null) {//считываю файл по адресу filePath
+                        osw.write(s);//передаю клиенту
+                    }
+                    br.close();//закрываю поток
+                } else {
+                    osw.write("HTTP/1.0 204 No Content\n" +
+                            "Content-type: text/html\n" +
+                            "Content-length: " +
+                            request.length() +"\n" +
+                            "<h1>Welcome, client " + count + "\n"+
+                            " Pls check your request and try again</h1>\n\n\n");
+
+                }
             } else {//если метод не тот - ошибка
-                osw.write("<!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\">\n" +
-                        "<html>\n" +
-                        "<head>\n" +
-                        "   <title>500 Internal Server Error</title>\n" +
+                osw.write("<html>\n" +
+                        "<head>HTTP/1.0 500 Internal Server Error\n" +
                         "</head>\n" +
                         "<body>\n" +
-                        "   <h1>Internal Server Error</h1>\n" +
+                        "<h1>Content-type: text/html</h1>\n" +
+                        "<h2>Content-length: " + request.length() + "</h2>\n"+
                         "   <p>Your browser sent a request that this server could not understand.</p>\n" +
-                        "   <p>The request line contained invalid characters following the protocol string.</p>\n" +
+                        "   <p>Please check the correction of your input data.</p>\n" +
                         "</body>\n" +
                         "</html>");
             }
