@@ -12,7 +12,7 @@ public class client {
         BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(client.getOutputStream()));//открываю выводящий поток для запросов
         Scanner reader = new Scanner(client.getInputStream());//открываю входящий поток для считывания ответов сервера
 
-        writer.write("GET C:\\Users\\Администратор\\IdeaProjects\\mavFolder\\serverProj2\\src\\main\\java\\pack\\inf.txt HTTP/1.0\n"); //отправляю запрос (если менять в строке вид метода, то будет разный результат)
+        writer.write("GET C:\\Users\\Администратор\\IdeaProjects\\mavFolder\\serverProj2\\src\\main\\java\\pack\\info.txt HTTP/1.0\n"); //отправляю запрос (если менять в строке вид метода, то будет разный результат)
         writer.flush();//сбрасываю поток
 
         while(reader.hasNext()) { //вывожу в консоль ответ сервера

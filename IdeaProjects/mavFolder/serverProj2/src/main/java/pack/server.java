@@ -3,8 +3,6 @@ package pack;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -16,10 +14,7 @@ public class server {
         ServerSocket serverSocket  = new ServerSocket(12000);//серверный сокет с портом коннекта
         Socket clientSocket;//сокет подключения с клиентом
         //для поиска(GET в начале строки и HTTP, а также названия файла)
-        Pattern pattern1 = Pattern.compile ("^(GET){1,1}\\b\\s.+$");//создаю объект pattern1 типа Pattern на основе реджекс
-
-        File dir = new File("C:\\Users\\Администратор\\IdeaProjects\\mavFolder\\serverProj2\\src\\main\\java\\pack");//путь к директории с файлами
-
+        Pattern pattern1 = Pattern.compile ("(C:).+(.txt)");//создаю объект pattern1 типа Pattern на основе реджекс
         while (count < 5) {//пока верно
             clientSocket = serverSocket.accept();//создаю сокет для подключения и ожидаю подключения
             System.out.println("Client " + (++count) + " entered ");//отображаю вход клиента и его номер
@@ -28,63 +23,36 @@ public class server {
             BufferedWriter osw = new BufferedWriter(new OutputStreamWriter(clientSocket.getOutputStream()));//открываю выводящий поток
 
             String request = isr.readLine();//считываю входящую инфу
-
+            String filePath = "";
             Matcher matcher1 = pattern1.matcher(request);//создаю объект matcher1 типа Matcher на основе поступившей от клиента информации
-
-            if(matcher1.find()) { //определяю метод http
-                //если не один из трех GET, то ошибка е500
-                List<File> fileList = new ArrayList<>();//список для файлов из директории
-                String filePath = null;//инициализирую filePath
-                for (File file : dir.listFiles()){//перебираю массив объектов(путей) к файлам в директории dir
-                    fileList.add(file);//переписываю пути доступа к файлам
-                }
-                String[] fileArray = new String[fileList.size()];//массив строк размером со список fileList
-                for (int i = 0; i < fileArray.length; i++) {
-                    fileArray[i] = fileList.get(i).toString();//переписываю все пути к файла из списка в массив
-                }
-                for (int i = 0; i < fileArray.length; i++) {//ищу путь к файлу из запроса
-                    if (request.contains(fileArray[i])) {//если путь к файлу из запроса  есть в списке
-                        filePath = fileArray[i];//копирую сюда путь к файлу
-                    }
-                }
-                if (filePath != null) {
+            if(matcher1.find()) {
+                filePath = matcher1.group();
+            }
+            try {
+                BufferedReader br = new BufferedReader(new FileReader(filePath));//открываю поток для чтения файла по адресу filePath
+                String s;
+                s = br.readLine();
+                if ( s != null ) {
                     osw.write("HTTP/1.0 200 OK\n" +
                             "Content-type: text/html\n" +
                             "Content-length: " +
-                            request.length() +"\n" +
-                            "<h1>Welcome, client " + count  + "</h1>\n\n\n");//сообщаю данные о запросе клиенту
-                    BufferedReader br = new BufferedReader(new FileReader(filePath));//открываю поток для чтения файла по адресу filePath
-                    String s;
-                    while((s = br.readLine()) != null) {//считываю файл по адресу filePath
-                        osw.write(s);//передаю клиенту
-                    }
-                    br.close();//закрываю поток
-                } else {
-                    osw.write("HTTP/1.0 204 No Content\n" +
-                            "Content-type: text/html\n" +
-                            "Content-length: " +
-                            request.length() +"\n" +
-                            "<h1>Welcome, client " + count + "\n"+
-                            " Pls check your request and try again</h1>\n\n\n");
-
+                            request.length() + "\n" +
+                            "<h1>Welcome, client " + count + "</h1>\n\n\n" + s);//сообщаю данные о запросе клиенту
                 }
-            } else {//если метод не тот - ошибка
-                osw.write("<html>\n" +
-                        "<head>HTTP/1.0 500 Internal Server Error\n" +
-                        "</head>\n" +
-                        "<body>\n" +
-                        "<h1>Content-type: text/html</h1>\n" +
-                        "<h2>Content-length: " + request.length() + "</h2>\n"+
-                        "   <p>Your browser sent a request that this server could not understand.</p>\n" +
-                        "   <p>Please check the correction of your input data.</p>\n" +
-                        "</body>\n" +
-                        "</html>");
+                br.close();//закрываю поток
+            } catch (FileNotFoundException ex) {
+                System.out.println("Исключение: " + ex);
+                osw.write("HTTP/1.0 404 Not Found\n" +
+                        "Content-type: text/html\n" +
+                        "Content-length: " +
+                        request.length() + "\n" +
+                        "<h1>Welcome, client " + count + "\n" +
+                        " Pls check your request and try again</h1>\n\n\n");
             }
-            osw.flush();//сбрасываю поток
 
+            osw.flush();//сбрасываю поток
             isr.close();//закрываю поток
             osw.close();//закрываю поток
-
             clientSocket.close();//закрываю сокет
         }
         serverSocket.close();//закрываю поток сервера(выключаю сервер)
